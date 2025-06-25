@@ -1,69 +1,24 @@
-import fetch from 'node-fetch';
+import express from 'express';
+import cors from 'cors';
+import bodyParser from 'body-parser';
+import dotenv from 'dotenv';
 
-const [, , method, fullResource, ...args] = process.argv;
-const baseUrl = 'https://fakestoreapi.com';
+import productRoutes from './routes/products.routes.js';
+import authRoutes from './routes/auth.routes.js';
+import { notFoundHandler } from './middlewares/notFound.middleware.js';
 
-// Separamos el recurso y el ID si existe (products/15)
-const [resource, resourceId] = fullResource.split('/');
+dotenv.config();
+const app = express();
+const PORT = process.env.PORT || 3000;
 
-const getAllProducts = async () => {
-  const res = await fetch(`${baseUrl}/products`);
-  const data = await res.json();
-  console.log(data);
-};
+app.use(cors());
+app.use(bodyParser.json());
 
-const getProductById = async (id) => {
-  const res = await fetch(`${baseUrl}/products/${id}`);
-  const data = await res.json();
-  console.log(data);
-};
+app.use('/api/products', productRoutes);
+app.use('/auth', authRoutes);
 
-const createProduct = async (title, price, category) => {
-  const res = await fetch(`${baseUrl}/products`, {
-    method: 'POST',
-    body: JSON.stringify({
-      title,
-      price: parseFloat(price),
-      description: 'Producto creado desde CLI',
-      image: 'https://i.pravatar.cc',
-      category
-    }),
-    headers: {
-      'Content-Type': 'application/json'
-    }
-  });
-  const data = await res.json();
-  console.log(data);
-};
+app.use('*', notFoundHandler);
 
-const deleteProduct = async (id) => {
-  const res = await fetch(`${baseUrl}/products/${id}`, {
-    method: 'DELETE'
-  });
-  const data = await res.json();
-  console.log(data);
-};
-
-// Lógica de comandos
-const main = async () => {
-  if (method === 'GET' && resource === 'products') {
-    if (resourceId) {
-      await getProductById(resourceId);
-    } else {
-      await getAllProducts();
-    }
-  } else if (method === 'POST' && resource === 'products') {
-    const [title, price, category] = args;
-    if (!title || !price || !category) {
-      console.error('Faltan argumentos. Uso: POST products <title> <price> <category>');
-      return;
-    }
-    await createProduct(title, price, category);
-  } else if (method === 'DELETE' && resource === 'products' && resourceId) {
-    await deleteProduct(resourceId);
-  } else {
-    console.log('Comando no reconocido. Revisa los requerimientos.');
-  }
-};
-
-main();
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en puerto ${PORT}`);
+});

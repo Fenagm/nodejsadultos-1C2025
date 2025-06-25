@@ -1,0 +1,1 @@
+// Firebase usa documentos dinámicos, así que no se define un modelo estricto.
